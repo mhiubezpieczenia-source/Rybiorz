@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F6F5C">
+<title>Rybiorz</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{
+  --bg:#F3F5F2; --card:#FFFFFF; --ink:#14231C; --muted:#4A5A52; --line:#D5DDD7;
+  --green:#1F6F5C; --orange:#C2581F; --warn:#B3261E; --warnbg:#FCE9E7; --okbg:#E3F1EB;
+  --dark:#10201A; --dark2:#1C3229; --darkline:#3A5A4C; --darkink:#EEF3EF; --darkmuted:#A9BDB2;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px}
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+body.dark{background:var(--dark);color:var(--darkink);padding-bottom:0}
+h1{font-size:26px;margin:0}
+h2{font-size:19px;margin:18px 0 8px}
+header.top{padding:20px 16px 8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+main{padding:0 16px 24px}
+.muted{color:var(--muted);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}
+.row{display:flex;gap:10px;align-items:center}
+.between{justify-content:space-between}
+.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+button,.btn{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;min-height:44px;padding:0 14px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+button.primary,.btn.primary{background:var(--orange);border-color:var(--orange);color:#fff}
+button.green{background:var(--green);border-color:var(--green);color:#fff}
+button.danger{color:var(--warn);border-color:#E4B8B4}
+button.small{min-height:36px;padding:0 10px;font-size:14px}
+button.block{width:100%}
+label{display:block;font-size:14px;color:var(--muted);margin:10px 0 4px}
+input,select,textarea{font:inherit;width:100%;min-height:44px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;color:var(--ink)}
+textarea{min-height:70px}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{border:none;border-radius:0;background:#fff}
+.seg button.on{background:var(--green);color:#fff}
+.alert{border-radius:12px;padding:10px 12px;margin:10px 0;font-size:15px}
+.alert.warn{background:var(--warnbg);color:#6B1610;border:1px solid #E4B8B4}
+.alert.ok{background:var(--okbg);color:#123F33;border:1px solid #B7D8CB}
+.alert.info{background:#FFF4E5;color:#5A3510;border:1px solid #F0D2AE}
+.catch{display:flex;gap:12px;align-items:center}
+.thumb{width:76px;height:76px;border-radius:10px;background:#C9D8CF;object-fit:cover;flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted)}
+.big{font-size:17px;font-weight:700}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--okbg);color:var(--green)}
+.tag.took{background:#FFF0E6;color:#8A3A10}
+.stat{background:var(--bg);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:2px}
+.stat b{font-size:20px}
+.bar{height:10px;border-radius:5px;background:var(--green)}
+.list-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.list-item:last-child{border-bottom:none}
+.menu-grid button{height:84px;flex-direction:column;font-size:14px;text-align:center}
+nav.bottom{position:fixed;left:0;right:0;bottom:0;height:calc(76px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;z-index:1000}
+nav.bottom button{border:none;background:none;flex-direction:column;font-size:11px;gap:3px;color:var(--muted);min-height:60px;padding:0}
+nav.bottom button.on{color:var(--green);font-weight:800}
+nav.bottom button.plus{width:62px;height:62px;border-radius:31px;background:var(--orange);color:#fff;font-size:34px;justify-self:center;margin-top:-26px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+body.dark nav.bottom{display:none}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#map{height:280px;border-radius:14px;border:1px solid var(--line);margin:10px 0}
+.photo-prev{width:100%;max-height:260px;object-fit:cover;border-radius:12px;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.toast{position:fixed;left:16px;right:16px;bottom:100px;background:var(--ink);color:#fff;padding:12px 14px;border-radius:12px;z-index:2000;font-weight:600}
+/* tryb nad wodą */
+.water{min-height:100vh;padding:20px 16px calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px}
+.water .timer{font-size:68px;font-weight:800;text-align:center;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.water .tile{background:var(--dark2);border-radius:12px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.water .tile span{font-size:12px;color:var(--darkmuted)}
+.water .tile b{font-size:17px}
+.water button{background:var(--dark2);color:var(--darkink);border:2px solid var(--darkline);border-radius:18px;min-height:68px;font-size:17px}
+.water button.catchbtn{background:var(--orange);border:none;min-height:190px;font-size:36px;font-weight:800;border-radius:24px}
+.water button.rec{background:var(--warn);border-color:var(--warn)}
+.water .muted{color:var(--darkmuted)}
+.water select{background:var(--dark2);color:var(--darkink);border-color:var(--darkline)}
+@media print{nav.bottom,.noprint{display:none!important}body{padding:0}.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav class="bottom" id="nav">
+  <button data-go="dziennik"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>Dziennik</button>
+  <button data-go="lowiska"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6-6-6-11a6 6 0 0 1 12 0c0 5-6 11-6 11z"/><circle cx="12" cy="10" r="2"/></svg>Łowiska</button>
+  <button data-go="zlowilem" class="plus" aria-label="Złowiłem">+</button>
+  <button data-go="pogoda"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"/></svg>Pogoda</button>
+  <button data-go="wiecej"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Więcej</button>
+</nav>
+<script>
+'use strict';
+/* ================= Dane stałe ================= */
+const GATUNKI = ['Amur','Boleń','Brzana','Certa','Jaź','Jelec','Jesiotr','Karaś pospolity','Karaś srebrzysty','Karp','Kleń','Krąp','Leszcz','Lin','Lipień','Miętus','Okoń','Płoć','Pstrąg potokowy','Pstrąg tęczowy','Rozpiór','Sandacz','Sum','Szczupak','Świnka','Tołpyga','Ukleja','Węgorz','Wzdręga','Inny'];
+const METODY = ['Spławik','Grunt','Method feeder','Feeder','Spinning','Karpiowa (włos)','Bat','Muchowa','Podlodowa','Inna'];
+const KAT_WYDATKOW = ['Zezwolenie / składka','Łowisko komercyjne','Sprzęt','Przynęty i zanęty','Dojazd','Inne'];
+const SPRZET_START = ['Wędki','Kołowrotki','Podbierak','Mata karpiowa','Siatka / worek','Zanęta','Przynęty','Haczyki i przypony','Ciężarki / koszyczki','Krzesełko','Parasol','Czołówka','Karta wędkarska i zezwolenie','Woda i jedzenie','Powerbank'];
+// Źródło: Zasady amatorskiego połowu ryb PZW Okręg Wałbrzych 2025 (uchwała 205/2024), zasady wspólne dla Dolnego Śląska.
+// min = chroniony do tej długości włącznie; max = wymiar górny (chroniony od); okresy: [od MM-DD, do MM-DD]
+const PRZEPISY_START = {
+ 'Amur':{min:40,limit:'2 szt./dobę (łącznie z łososiowatymi, sandaczem, szczupakiem)'},
+ 'Boleń':{min:40},
+ 'Brzana':{min:40,okresy:[['01-01','06-30']],limit:'3 szt./dobę'},
+ 'Certa':{min:30,okresy:[['01-01','06-30']],limit:'5 szt./dobę'},
+ 'Głowacica':{min:70,okresy:[['03-01','05-31']],limit:'1 szt./tydzień'},
+ 'Jaź':{min:25},
+ 'Jelec':{min:15},
+ 'Karaś pospolity':{min:25,limit:'3 szt./dobę'},
+ 'Karp':{min:30,max:65,limit:'2 szt./dobę, 4/miesiąc, 30/rok'},
+ 'Kleń':{min:25},
+ 'Leszcz':{limit:'3 szt./dobę (zbiorniki zaporowe: 5)'},
+ 'Lin':{min:30,limit:'2 szt./dobę'},
+ 'Lipień':{zakaz:true,uwaga:'Całkowity zakaz zabierania.'},
+ 'Łosoś':{min:35,okresy:[['10-01','12-31']]},
+ 'Miętus':{min:25,okresy:[['12-01','02-29']]},
+ 'Okoń':{min:20,max:45},
+ 'Pstrąg potokowy':{min:25,max:45,okresy:[['09-01','12-31']],limit:'3 szt./dobę',uwaga:'Odra do ujścia Bystrzycy i Bystrzyca z dopływami: ochrona do 31.01.'},
+ 'Rozpiór':{min:25},
+ 'Sandacz':{min:55,max:85,okresy:[['01-01','05-31']],limit:'2 szt./dobę (z grupą), szczupak+sandacz 6/miesiąc, 35/rok'},
+ 'Sum':{min:70,okresy:[['01-01','05-31']]},
+ 'Szczupak':{min:55,max:85,okresy:[['01-01','04-30']],limit:'2 szt./dobę (z grupą), szczupak+sandacz 6/miesiąc, 35/rok',uwaga:'Z łodzi ochrona do 31.05.'},
+ 'Świnka':{min:30,okresy:[['01-01','05-15']]},
+ 'Węgorz':{min:60,okresy:[['12-01','03-31']],limit:'2 szt./dobę'},
+ 'Wzdręga':{min:15}
+};
+const ZRODLO_PRZEPISOW = 'Zasady PZW Okręg Wałbrzych 2025 (wspólne dla Dolnego Śląska). Sprawdź z zezwoleniem PZW Wrocław na bieżący rok i popraw w razie różnic.';
+
+/* ================= Baza w telefonie (IndexedDB) ================= */
+const STORES = ['catches','spots','trips','expenses','permits','rigs','sessions','notes','blobs','settings'];
+let dbp = null;
+function db(){
+  if(dbp) return dbp;
+  dbp = new Promise((res,rej)=>{
+    const r = indexedDB.open('rybiorz',1);
+    r.onupgradeneeded = ()=>{ for(const s of STORES) if(!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s,{keyPath:'id'}); };
+    r.onsuccess = ()=>res(r.result); r.onerror = ()=>rej(r.error);
+  });
+  return dbp;
+}
+async function tx(store,mode,fn){
+  const d = await db();
+  return new Promise((res,rej)=>{
+    const t = d.transaction(store,mode); const s = t.objectStore(store);
+    const out = fn(s); t.oncomplete = ()=>res(out && 'result' in out ? out.result : out); t.onerror = ()=>rej(t.error);
+  });
+}
+const all = (s)=>tx(s,'readonly',st=>st.getAll());
+const get = (s,id)=>tx(s,'readonly',st=>st.get(id));
+const put = (s,obj)=>tx(s,'readwrite',st=>st.put(obj));
+const del = (s,id)=>tx(s,'readwrite',st=>st.delete(id));
+const clearStore = (s)=>tx(s,'readwrite',st=>st.clear());
+const uid = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+async function setting(key,def){ const r = await get('settings',key); return r ? r.value : def; }
+const setSetting = (key,value)=>put('settings',{id:key,value});
+async function przepisy(){ return Object.assign({},PRZEPISY_START, await setting('przepisy',{})); }
+
+/* ================= Pomocnicze ================= */
+const $ = (sel)=>document.querySelector(sel);
+const esc = (s)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = (n)=>String(n).padStart(2,'0');
+const dataPL = (iso)=>{ if(!iso) return ''; const d=new Date(iso); return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`; };
+const godzPL = (iso)=>{ const d=new Date(iso); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const dzisISO = ()=>{ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const lokalnyDT = (d=new Date())=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const num = (v)=>{ const n = parseFloat(String(v).replace(',','.')); return isNaN(n)?null:n; };
+const kg = (n)=>n==null?'':n.toLocaleString('pl-PL',{maximumFractionDigits:2})+' kg';
+const zl = (n)=>(n||0).toLocaleString('pl-PL',{minimumFractionDigits:2,maximumFractionDigits:2})+' zł';
+const MIESIACE = ['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec','sierpień','wrzesień','październik','listopad','grudzień'];
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2600); }
+function opts(list,sel){ return list.map(x=>`<option${x===sel?' selected':''}>${esc(x)}</option>`).join(''); }
+function spotOpts(spots,sel){ return '<option value="">(bez łowiska)</option>'+spots.map(s=>`<option value="${s.id}"${s.id===sel?' selected':''}>${esc(s.name)}</option>`).join(''); }
+function pozycja(){
+  return new Promise(res=>{
+    if(!navigator.geolocation) return res(null);
+    navigator.geolocation.getCurrentPosition(p=>res({lat:+p.coords.latitude.toFixed(5),lon:+p.coords.longitude.toFixed(5)}),()=>res(null),{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
+  });
+}
+function odleglosc(a,b){ const R=6371,r=Math.PI/180; const dLat=(b.lat-a.lat)*r,dLon=(b.lon-a.lon)*r; const x=Math.sin(dLat/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLon/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
+async function najblizszeLowisko(pos){
+  if(!pos) return null; const spots = await all('spots'); let best=null,bd=1e9;
+  for(const s of spots){ if(s.lat==null) continue; const d=odleglosc(pos,s); if(d<bd){bd=d;best=s;} }
+  return bd<=1.5 ? best : null;
+}
+async function zdjecieDoBloba(file){
+  const img = await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=URL.createObjectURL(file); });
+  const max=1600, sc=Math.min(1,max/Math.max(img.width,img.height));
+  const c=document.createElement('canvas'); c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(img.src);
+  return new Promise(res=>c.toBlob(res,'image/jpeg',0.82));
+}
+const urlCache = {};
+async function blobURL(id){ if(!id) return null; if(urlCache[id]) return urlCache[id]; const b = await get('blobs',id); if(!b) return null; return urlCache[id]=URL.createObjectURL(b.blob); }
+
+/* ================= Słońce i księżyc (liczone w telefonie) ================= */
+function slonce(date,lat,lon){
+  // algorytm NOAA, wynik w czasie lokalnym telefonu
+  const rad=Math.PI/180, d=new Date(date.getFullYear(),date.getMonth(),date.getDate(),12);
+  const J = d/86400000 + 2440587.5, n = Math.round(J-2451545.0009-(-lon)/360);
+  const Js = 2451545.0009+(-lon)/360+n, M=(357.5291+0.98560028*(Js-2451545))%360;
+  const C=1.9148*Math.sin(M*rad)+0.02*Math.sin(2*M*rad)+0.0003*Math.sin(3*M*rad);
+  const L=(M+102.9372+C+180)%360, Jt=Js+0.0053*Math.sin(M*rad)-0.0069*Math.sin(2*L*rad);
+  const dec=Math.asin(Math.sin(L*rad)*Math.sin(23.44*rad));
+  const cosH=(Math.sin(-0.833*rad)-Math.sin(lat*rad)*Math.sin(dec))/(Math.cos(lat*rad)*Math.cos(dec));
+  if(cosH<-1||cosH>1) return null;
+  const H=Math.acos(cosH)/rad/360, toDate=j=>new Date((j-2440587.5)*86400000);
+  return {wschod:toDate(Jt-H), zachod:toDate(Jt+H)};
+}
+function ksiezyc(date){
+  const syn=29.530588853, ref=Date.UTC(2000,0,6,18,14);
+  let age=((date-ref)/86400000)%syn; if(age<0) age+=syn;
+  const oswietlenie=Math.round((1-Math.cos(2*Math.PI*age/syn))/2*100);
+  const fazy=[[1.85,'nów'],[5.54,'sierp przybywa'],[9.23,'pierwsza kwadra'],[12.92,'przybywa'],[16.61,'pełnia'],[20.3,'ubywa'],[23.99,'ostatnia kwadra'],[27.68,'sierp ubywa'],[30,'nów']];
+  return {faza:fazy.find(f=>age<f[0])[1], oswietlenie, wiek:age};
+}
+function godzina(d){ return d?`${pad(d.getHours())}:${pad(d.getMinutes())}`:'–'; }
+
+/* ================= Pogoda (Open-Meteo, darmowa, bez konta) ================= */
+const KODY = {0:'bezchmurnie',1:'prawie bezchmurnie',2:'częściowe zachmurzenie',3:'pochmurno',45:'mgła',48:'mgła',51:'mżawka',53:'mżawka',55:'mżawka',61:'słaby deszcz',63:'deszcz',65:'ulewa',71:'śnieg',73:'śnieg',75:'śnieżyca',80:'przelotny deszcz',81:'przelotny deszcz',82:'ulewa',95:'burza',96:'burza z gradem',99:'burza z gradem'};
+async function pobierzPogode(lat,lon){
+  const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,pressure_msl,wind_speed_10m,weather_code,cloud_cover&hourly=pressure_msl&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&wind_speed_unit=ms&timezone=auto&past_days=1&forecast_days=4`;
+  const r = await fetch(u); if(!r.ok) throw new Error('pogoda'); const j = await r.json();
+  const now = Date.now(); const times = j.hourly.time.map(t=>new Date(t).getTime());
+  let idx = times.findIndex(t=>t>now); if(idx<0) idx=times.length-1; idx=Math.max(0,idx-1);
+  const p3 = j.hourly.pressure_msl[Math.max(0,idx-3)], pNow=j.current.pressure_msl, pPlus = j.hourly.pressure_msl[Math.min(times.length-1,idx+6)];
+  const zmiana = pNow-p3;
+  const trend = zmiana>1.2?'rośnie':zmiana<-1.2?'spada':'stałe';
+  return {temp:j.current.temperature_2m, cisnienie:Math.round(pNow), trend, zmiana3h:+zmiana.toFixed(1), prognoza6h:Math.round(pPlus),
+    wiatr:j.current.wind_speed_10m, opis:KODY[j.current.weather_code]||'', chmury:j.current.cloud_cover, dni:j.daily, czas:new Date().toISOString()};
+}
+function ocenaDnia(p){
+  // prosta ocena wędkarska: stabilne lub łagodnie spadające ciśnienie, umiarkowany wiatr, bez burzy
+  let pkt=3, why=[];
+  if(p.trend==='stałe'){pkt+=1;why.push('stabilne ciśnienie');}
+  if(p.trend==='spada' && p.zmiana3h>-3){pkt+=1;why.push('ciśnienie łagodnie spada');}
+  if(p.zmiana3h<=-3||p.zmiana3h>=3){pkt-=1;why.push('gwałtowna zmiana ciśnienia');}
+  if(p.wiatr>=1.5&&p.wiatr<=6){pkt+=0.5;why.push('lekki wiatr');} else if(p.wiatr>9){pkt-=1;why.push('silny wiatr');}
+  if(/burza/.test(p.opis)){pkt-=2;why.push('burza');}
+  pkt=Math.max(1,Math.min(5,Math.round(pkt)));
+  const slowo=['','słabo','raczej słabo','średnio','dobrze','bardzo dobrze'][pkt];
+  return {pkt,slowo,why:why.join(', ')||'zwykłe warunki'};
+}
+
+/* ================= Router ================= */
+const app = $('#app');
+let mapa = null;
+const widoki = {};
+function idz(nazwa,param){ location.hash = param!=null ? `${nazwa}/${encodeURIComponent(param)}` : nazwa; }
+async function render(){
+  const [nazwa,param] = (location.hash.slice(1)||'dziennik').split('/');
+  if(mapa){ mapa.remove(); mapa=null; }
+  document.body.classList.toggle('dark', nazwa==='nadwoda');
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.go===nazwa));
+  const fn = widoki[nazwa] || widoki.dziennik;
+  window.scrollTo(0,0);
+  try { await fn(param && decodeURIComponent(param)); } catch(e){ console.error(e); app.innerHTML=`<main><div class="alert warn">Coś poszło nie tak: ${esc(e.message)}</div></main>`; }
+}
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>idz(b.dataset.go));
+window.addEventListener('hashchange',render);
+function naglowek(tytul,wstecz){ return `<header class="top"><div class="row">${wstecz?`<button class="small" onclick="history.back()" aria-label="Wstecz">←</button>`:''}<h1>${esc(tytul)}</h1></div></header>`; }
+
+/* ================= Przypomnienia na starcie ================= */
+async function przypomnienia(){
+  const out=[]; const dzis=new Date(); dzis.setHours(0,0,0,0);
+  const trips = await all('trips');
+  for(const t of trips){ const d=new Date(t.date+'T00:00'); const dni=Math.round((d-dzis)/86400000);
+    if(dni===0) out.push(`<div class="alert info">Dziś wyjazd: <b>${esc(t.spotName||t.title||'')}</b></div>`);
+    if(dni===1) out.push(`<div class="alert info">Jutro wyjazd: <b>${esc(t.spotName||t.title||'')}</b>. <a href="#sprzet">Sprawdź listę sprzętu</a></div>`); }
+  const permits = await all('permits');
+  for(const p of permits){ if(!p.until) continue; const dni=Math.round((new Date(p.until+'T00:00')-dzis)/86400000);
+    if(dni<0) out.push(`<div class="alert warn">Nieważne od ${dataPL(p.until)}: <b>${esc(p.name)}</b></div>`);
+    else if(dni<=30) out.push(`<div class="alert info">Za ${dni} dni kończy się: <b>${esc(p.name)}</b> (${dataPL(p.until)})</div>`); }
+  return out.join('');
+}
+
+/* ================= 1. Dziennik ================= */
+widoki.dziennik = async ()=>{
+  const catches = (await all('catches')).sort((a,b)=>b.time.localeCompare(a.time));
+  const sess = await setting('sesja',null);
+  let html = naglowek('Rybiorz') + `<main>${await przypomnienia()}
+  <button class="green block" onclick="idz('nadwoda')" style="min-height:52px;font-size:17px">${sess?'Wróć do zasiadki ('+esc(sess.spotName||'nad wodą')+')':'Jadę nad wodę: tryb zasiadki'}</button>
+  <div class="row between"><h2>Dziennik połowów</h2><span class="muted">${catches.length} szt.</span></div>`;
+  if(!catches.length) html += `<div class="card muted">Jeszcze nic. Naciśnij pomarańczowy „+” na dole, gdy złowisz rybę.</div>`;
+  html += `<div id="lista"></div></main>`;
+  app.innerHTML = html;
+  const lista = $('#lista');
+  for(const c of catches){
+    const div=document.createElement('div'); div.className='card catch'; div.onclick=()=>idz('polow',c.id);
+    const url = await blobURL(c.photo);
+    div.innerHTML = `${url?`<img class="thumb" src="${url}" alt="">`:'<div class="thumb">brak zdjęcia</div>'}
+      <div class="grow"><div class="big">${esc(c.species)}${c.weight?', '+kg(c.weight):''}${c.length?', '+c.length+' cm':''}</div>
+      <div class="muted">${dataPL(c.time)} ${godzPL(c.time)} · ${esc(c.spotName||'bez łowiska')}</div>
+      <div class="muted">${esc([c.method,c.bait].filter(Boolean).join(' · '))}</div>
+      <span class="tag ${c.kept?'took':''}">${c.kept?'Zabrana':'Wypuszczona'}</span></div>`;
+    lista.appendChild(div);
+  }
+};
+
+/* ================= Złowiłem (formularz) ================= */
+widoki.zlowilem = async (id)=>{
+  const c = id ? await get('catches',id) : null;
+  const spots = await all('spots');
+  const sess = await setting('sesja',null);
+  const ost = await setting('ostatni',{});
+  const v = c || {species:ost.species||'Karp',method:ost.method||'Method feeder',bait:'',groundbait:'',rig:'',kept:false,spotId:sess?sess.spotId:'',time:new Date().toISOString()};
+  const rigs = await all('rigs');
+  app.innerHTML = naglowek(c?'Edytuj połów':'Złowiłem!',true) + `<main>
+  <label>Zdjęcie</label>
+  <div class="grid2"><button onclick="$('#fAparat').click()">Zrób zdjęcie</button><button onclick="$('#fGaleria').click()">Z galerii</button></div>
+  <input id="fAparat" type="file" accept="image/*" capture="environment" hidden>
+  <input id="fGaleria" type="file" accept="image/*" hidden>
+  <img id="podglad" class="photo-prev" hidden alt="">
+  <label for="fGat">Gatunek</label><select id="fGat">${opts(GATUNKI,v.species)}</select>
+  <div class="grid2"><div><label for="fWaga">Waga (kg)</label><input id="fWaga" inputmode="decimal" value="${v.weight??''}" placeholder="np. 2,4"></div>
+  <div><label for="fDl">Długość (cm)</label><input id="fDl" inputmode="decimal" value="${v.length??''}" placeholder="np. 45"></div></div>
+  <label>Co z rybą?</label>
+  <div class="seg" id="fKept"><button data-v="0" class="${!v.kept?'on':''}">Wypuściłem</button><button data-v="1" class="${v.kept?'on':''}">Zabrałem</button></div>
+  <div id="ostrzezenie"></div>
+  <label for="fMet">Metoda</label><select id="fMet">${opts(METODY,v.method)}</select>
+  <div class="grid2"><div><label for="fPrz">Przynęta</label><input id="fPrz" value="${esc(v.bait)}" placeholder="np. kukurydza"></div>
+  <div><label for="fZan">Zanęta</label><input id="fZan" value="${esc(v.groundbait)}" placeholder="np. pellet"></div></div>
+  <label for="fZes">Zestaw</label><select id="fZes"><option value="">(bez zestawu)</option>${rigs.map(r=>`<option value="${r.id}"${r.id===v.rig?' selected':''}>${esc(r.name)}</option>`).join('')}</select>
+  <label for="fLow">Łowisko</label><select id="fLow">${spotOpts(spots,v.spotId)}</select>
+  <label for="fCzas">Data i godzina</label><input id="fCzas" type="datetime-local" value="${lokalnyDT(new Date(v.time))}">
+  <label for="fNot">Notatka</label><textarea id="fNot">${esc(v.note)}</textarea>
+  <div id="auto" class="muted" style="margin-top:8px">${c?`Pogoda zapisana: ${esc(c.weather?`${c.weather.temp}°C, ${c.weather.cisnienie} hPa (${c.weather.trend}), wiatr ${c.weather.wiatr} m/s`:'brak')}`:'Miejsce i pogoda zapiszą się same po naciśnięciu „Zapisz”.'}</div>
+  <button class="primary block" id="zapisz" style="margin-top:16px;min-height:56px;font-size:18px">Zapisz</button>
+  ${c?`<button class="danger block" id="usun" style="margin-top:10px">Usuń połów</button>`:''}
+  </main>`;
+  let kept = !!v.kept, photoBlob=null;
+  if(c && c.photo){ const u=await blobURL(c.photo); if(u){ $('#podglad').src=u; $('#podglad').hidden=false; } }
+  const naZdjecie = async e=>{ const f=e.target.files[0]; if(!f) return; photoBlob = await zdjecieDoBloba(f); $('#podglad').src=URL.createObjectURL(photoBlob); $('#podglad').hidden=false; };
+  $('#fAparat').onchange = naZdjecie; $('#fGaleria').onchange = naZdjecie;
+  const sprawdz = async ()=>{ $('#ostrzezenie').innerHTML = kept ? await sprawdzPrzepisy($('#fGat').value, num($('#fDl').value), new Date($('#fCzas').value)) : ''; };
+  $('#fKept').querySelectorAll('button').forEach(b=>b.onclick=()=>{ kept=b.dataset.v==='1'; $('#fKept').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); sprawdz(); });
+  $('#fGat').onchange=sprawdz; $('#fDl').oninput=sprawdz; $('#fCzas').onchange=sprawdz;
+  sprawdz();
+  $('#zapisz').onclick = async ()=>{
+    const btn=$('#zapisz'); btn.disabled=true; btn.textContent='Zapisuję…';
+    const rec = c ? {...c} : {id:uid(), created:new Date().toISOString()};
+    rec.species=$('#fGat').value; rec.weight=num($('#fWaga').value); rec.length=num($('#fDl').value); rec.kept=kept;
+    rec.method=$('#fMet').value; rec.bait=$('#fPrz').value.trim(); rec.groundbait=$('#fZan').value.trim(); rec.rig=$('#fZes').value;
+    rec.time=new Date($('#fCzas').value).toISOString(); rec.note=$('#fNot').value.trim();
+    if(photoBlob){ const pid=uid(); await put('blobs',{id:pid,blob:photoBlob,kind:'photo'}); rec.photo=pid; }
+    if(!c){
+      const pos = await pozycja(); if(pos){ rec.lat=pos.lat; rec.lon=pos.lon; }
+      if(!$('#fLow').value && pos){ const s=await najblizszeLowisko(pos); if(s) $('#fLow').value=s.id; }
+      const p = pos || (sess&&sess.lat!=null?{lat:sess.lat,lon:sess.lon}:null);
+      if(p && navigator.onLine){ try{ rec.weather = await pobierzPogode(p.lat,p.lon); delete rec.weather.dni; }catch(e){} }
+      rec.moon = ksiezyc(new Date(rec.time)).faza;
+      if(sess) rec.session = sess.id;
+    }
+    rec.spotId=$('#fLow').value; const sp=spots.find(s=>s.id===rec.spotId); rec.spotName=sp?sp.name:'';
+    await put('catches',rec); await setSetting('ostatni',{species:rec.species,method:rec.method});
+    toast('Zapisane'); idz(sess && !c ? 'nadwoda' : 'dziennik');
+  };
+  if(c) $('#usun').onclick = async ()=>{ if(!confirm('Usunąć ten połów?')) return; if(c.photo) await del('blobs',c.photo); await del('catches',c.id); toast('Usunięte'); idz('dziennik'); };
+};
+widoki.polow = (id)=>widoki.zlowilem(id);
+
+async function sprawdzPrzepisy(gat,dl,data){
+  const P = (await przepisy())[gat];
+  if(!P) return `<div class="alert ok">Brak zapisanych przepisów dla gatunku „${esc(gat)}”. Sprawdź zezwolenie.</div>`;
+  const problemy=[], info=[];
+  if(P.zakaz) problemy.push(P.uwaga||'Zakaz zabierania.');
+  if(P.min!=null){ if(dl!=null && dl<=P.min) problemy.push(`Za mała: chroniona do ${P.min} cm, a ma ${dl} cm.`); else info.push(`Wymiar ochronny: do ${P.min} cm.`); }
+  if(P.max!=null){ if(dl!=null && dl>=P.max) problemy.push(`Za duża: od ${P.max} cm ryba jest chroniona (wymiar górny).`); else info.push(`Wymiar górny: od ${P.max} cm.`); }
+  if(P.okresy && !isNaN(data)){ const md=`${pad(data.getMonth()+1)}-${pad(data.getDate())}`;
+    for(const [od,doo] of P.okresy){ const w = od<=doo ? (md>=od&&md<=doo) : (md>=od||md<=doo);
+      if(w) problemy.push(`Okres ochronny: ${od.split('-').reverse().join('.')}–${doo.split('-').reverse().join('.')}.`); else info.push(`Okres ochronny: ${od.split('-').reverse().join('.')}–${doo.split('-').reverse().join('.')}.`); } }
+  if(P.limit) info.push(`Limit: ${P.limit}.`);
+  if(P.uwaga && !P.zakaz) info.push(P.uwaga);
+  if(dl==null && P.min!=null) info.unshift('Wpisz długość, a sprawdzę wymiar.');
+  return problemy.length ? `<div class="alert warn"><b>Uwaga, tej ryby raczej nie wolno zabrać.</b><br>${problemy.map(esc).join('<br>')}<br><span style="font-size:13px">${info.map(esc).join(' ')}</span></div>`
+    : `<div class="alert ok"><b>Wygląda w porządku.</b> ${info.map(esc).join(' ')}</div>`;
+}
+
+/* ================= 2. Łowiska ================= */
+widoki.lowiska = async ()=>{
+  const spots = await all('spots'); const catches = await all('catches');
+  app.innerHTML = naglowek('Moje łowiska') + `<main>
+  <div id="map"></div><p class="muted" style="margin:0">Dotknij mapy, żeby dodać łowisko w tym miejscu. Mapa wymaga internetu.</p>
+  <button class="green block" id="tuJestem" style="margin-top:10px">Dodaj łowisko tu, gdzie stoję</button>
+  <div id="lista"></div></main>`;
+  const lista=$('#lista');
+  if(!spots.length) lista.innerHTML = `<div class="card muted">Brak łowisk. Dodaj pierwsze.</div>`;
+  for(const s of spots){
+    const n = catches.filter(c=>c.spotId===s.id).length;
+    const d=document.createElement('div'); d.className='card'; d.onclick=()=>idz('lowisko',s.id);
+    d.innerHTML=`<div class="row between"><div class="big">${esc(s.name)}</div><span class="tag">${esc(s.type||'PZW')}</span></div><div class="muted">${n} połowów${s.note?' · '+esc(s.note.slice(0,60)):''}</div>`;
+    lista.appendChild(d);
+  }
+  $('#tuJestem').onclick = async ()=>{ const p=await pozycja(); if(!p) return toast('Nie mam lokalizacji. Włącz GPS.'); idz('lowisko','nowe:'+p.lat+','+p.lon); };
+  if(window.L){
+    mapa = L.map('map').setView([51.11,17.03],9);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(mapa);
+    const pts=[];
+    for(const s of spots){ if(s.lat==null) continue; pts.push([s.lat,s.lon]); L.marker([s.lat,s.lon]).addTo(mapa).bindPopup(`<b>${esc(s.name)}</b><br><a href="#lowisko/${s.id}">Otwórz</a>`); }
+    if(pts.length) mapa.fitBounds(pts,{padding:[30,30],maxZoom:13});
+    else pozycja().then(p=>{ if(p&&mapa) mapa.setView([p.lat,p.lon],12); });
+    mapa.on('click',e=>idz('lowisko','nowe:'+e.latlng.lat.toFixed(5)+','+e.latlng.lng.toFixed(5)));
+  } else $('#map').outerHTML='<div class="card muted">Mapa niedostępna bez internetu.</div>';
+};
+widoki.lowisko = async (id)=>{
+  let s;
+  if(id && id.startsWith('nowe:')){ const [lat,lon]=id.slice(5).split(',').map(Number); s={id:uid(),name:'',type:'PZW',lat,lon,note:'',nowe:true}; }
+  else s = await get('spots',id);
+  if(!s) return idz('lowiska');
+  const catches = (await all('catches')).filter(c=>c.spotId===s.id);
+  const rekord = catches.filter(c=>c.weight).sort((a,b)=>b.weight-a.weight)[0];
+  app.innerHTML = naglowek(s.nowe?'Nowe łowisko':s.name,true) + `<main>
+  ${!s.nowe?`<div class="grid3"><div class="stat"><span class="muted">Połowy</span><b>${catches.length}</b></div><div class="stat"><span class="muted">Rekord</span><b>${rekord?kg(rekord.weight):'–'}</b></div><div class="stat"><span class="muted">Co działa</span><b style="font-size:15px">${esc(topKlucz(catches,'bait')||'–')}</b></div></div>
+  <div class="grid2" style="margin-top:10px"><button class="primary" onclick="idz('zlowilem')">+ Złowiłem</button><button onclick="idz('codziala','${s.id}')">Co tu działa</button></div>
+  <div class="grid2" style="margin-top:10px"><button onclick="idz('pogoda','${s.id}')">Pogoda tutaj</button><a class="btn" href="geo:${s.lat},${s.lon}?q=${s.lat},${s.lon}(${encodeURIComponent(s.name)})">Nawiguj</a></div>`:''}
+  <label for="sNaz">Nazwa</label><input id="sNaz" value="${esc(s.name)}" placeholder="np. Odra, Rędzin">
+  <label for="sTyp">Rodzaj</label><select id="sTyp">${opts(['PZW','Komercyjne','Inne'],s.type)}</select>
+  <div class="grid2"><div><label for="sLat">Szerokość</label><input id="sLat" inputmode="decimal" value="${s.lat??''}"></div><div><label for="sLon">Długość geogr.</label><input id="sLon" inputmode="decimal" value="${s.lon??''}"></div></div>
+  <label for="sNot">Notatka (dojazd, głębokość, co brało)</label><textarea id="sNot">${esc(s.note)}</textarea>
+  <button class="green block" id="zapisz" style="margin-top:14px">Zapisz łowisko</button>
+  ${!s.nowe?`<button class="danger block" id="usun" style="margin-top:10px">Usuń łowisko</button>`:''}</main>`;
+  $('#zapisz').onclick = async ()=>{ const name=$('#sNaz').value.trim(); if(!name) return toast('Wpisz nazwę');
+    const rec={id:s.id,name,type:$('#sTyp').value,lat:num($('#sLat').value),lon:num($('#sLon').value),note:$('#sNot').value.trim()};
+    await put('spots',rec); toast('Zapisane'); idz('lowiska'); };
+  if(!s.nowe) $('#usun').onclick = async ()=>{ if(!confirm('Usunąć łowisko? Połowy zostaną.')) return; await del('spots',s.id); idz('lowiska'); };
+};
+function topKlucz(list,key){ const m={}; for(const c of list){ const k=(c[key]||'').trim(); if(k) m[k]=(m[k]||0)+1; } return Object.entries(m).sort((a,b)=>b[1]-a[1])[0]?.[0]; }
+
+/* ================= 3 + 12. Pogoda, słońce, księżyc ================= */
+widoki.pogoda = async (spotId)=>{
+  const spots = await all('spots');
+  const wyb = spotId || await setting('pogodaSpot','');
+  app.innerHTML = naglowek('Pogoda') + `<main>
+  <label for="pLow">Dla łowiska</label><select id="pLow"><option value="">Tu, gdzie jestem</option>${spots.filter(s=>s.lat!=null).map(s=>`<option value="${s.id}"${s.id===wyb?' selected':''}>${esc(s.name)}</option>`).join('')}</select>
+  <div id="wynik"><div class="card muted">Pobieram…</div></div></main>`;
+  const laduj = async ()=>{
+    const id=$('#pLow').value; await setSetting('pogodaSpot',id);
+    let p = id ? spots.find(s=>s.id===id) : await pozycja();
+    if(!p) p={lat:51.11,lon:17.03,dom:true};
+    const sl = slonce(new Date(),p.lat,p.lon), ks = ksiezyc(new Date());
+    const astro = `<div class="card"><div class="big">Słońce i księżyc</div><div class="grid3" style="margin-top:8px">
+      <div class="stat"><span class="muted">Wschód</span><b>${godzina(sl&&sl.wschod)}</b></div><div class="stat"><span class="muted">Zachód</span><b>${godzina(sl&&sl.zachod)}</b></div>
+      <div class="stat"><span class="muted">Księżyc</span><b style="font-size:15px">${ks.faza}</b><span class="muted">${ks.oswietlenie}%</span></div></div></div>`;
+    if(!navigator.onLine){ $('#wynik').innerHTML = `<div class="alert info">Brak internetu: pogody nie pobiorę. Słońce i księżyc działają.</div>`+astro; return; }
+    try{
+      const w = await pobierzPogode(p.lat,p.lon); const o=ocenaDnia(w);
+      const dni = w.dni.time.map((t,i)=>({t,kod:w.dni.weather_code[i],max:w.dni.temperature_2m_max[i],min:w.dni.temperature_2m_min[i],opad:w.dni.precipitation_sum[i],wiatr:w.dni.wind_speed_10m_max[i]})).filter(d=>d.t>=dzisISO());
+      $('#wynik').innerHTML = `${p.dom?'<div class="alert info">Nie mam lokalizacji, pokazuję Wrocław.</div>':''}
+      <div class="card"><div class="row between"><div><div style="font-size:40px;font-weight:800">${Math.round(w.temp)}°C</div><div class="muted">${esc(w.opis)}</div></div>
+      <div style="text-align:right"><div class="big">${w.cisnienie} hPa</div><div class="muted">${w.trend} (${w.zmiana3h>0?'+':''}${w.zmiana3h} w 3 h)</div><div class="muted">wiatr ${w.wiatr} m/s</div></div></div></div>
+      <div class="card"><div class="big">Na rybę: ${o.slowo} ${'●'.repeat(o.pkt)}${'○'.repeat(5-o.pkt)}</div><div class="muted">${esc(o.why)}. To prosta ocena, nie gwarancja.</div></div>
+      ${astro}
+      <h2>Najbliższe dni</h2>${dni.map(d=>{ const dt=new Date(d.t+'T12:00'); const s2=slonce(dt,p.lat,p.lon); const k2=ksiezyc(dt);
+        return `<div class="card"><div class="row between"><b>${['nd','pn','wt','śr','cz','pt','sb'][dt.getDay()]} ${dataPL(d.t)}</b><span>${Math.round(d.min)}…${Math.round(d.max)}°C</span></div>
+        <div class="muted">${esc(KODY[d.kod]||'')} · opad ${d.opad} mm · wiatr do ${d.wiatr} m/s</div><div class="muted">słońce ${godzina(s2&&s2.wschod)}–${godzina(s2&&s2.zachod)} · ${k2.faza}</div></div>`; }).join('')}
+      <p class="muted">Pogoda: Open-Meteo.</p>`;
+    }catch(e){ $('#wynik').innerHTML = `<div class="alert warn">Nie udało się pobrać pogody.</div>`+astro; }
+  };
+  $('#pLow').onchange=laduj; laduj();
+};
+
+/* ================= Więcej ================= */
+widoki.wiecej = async ()=>{
+  const k=(go,t,ico)=>`<button onclick="idz('${go}')"><svg class="i" viewBox="0 0 24 24">${ico}</svg>${t}</button>`;
+  app.innerHTML = naglowek('Więcej') + `<main><div class="grid3 menu-grid">
+  ${k('nadwoda','Nad wodą','<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M10 2h4"/>')}
+  ${k('rekordy','Rekordy','<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/>')}
+  ${k('codziala','Co działa','<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/>')}
+  ${k('przepisy','Wymiary i okresy','<path d="M3 17 17 3l4 4L7 21H3z"/><path d="m7 13 2 2M10 10l2 2M13 7l2 2"/>')}
+  ${k('sprzet','Lista sprzętu','<path d="m9 11 3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/>')}
+  ${k('zestawy','Zestawy','<path d="M12 2v14a4 4 0 1 1-4-4"/>')}
+  ${k('wyjazdy','Wyjazdy','<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>')}
+  ${k('wydatki','Wydatki','<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>')}
+  ${k('zezwolenia','Zezwolenia','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h6M7 14h4"/>')}
+  ${k('notatki','Nagrania','<rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>')}
+  ${k('eksport','Eksport i kopia','<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>')}
+  </div><p class="muted" style="margin-top:20px">Wszystkie dane są tylko w tym telefonie. Rób co jakiś czas kopię w „Eksport i kopia”.</p></main>`;
+};
+
+/* ================= 11 + 14. Tryb nad wodą: zasiadka i dyktafon ================= */
+let zegar=null, nagrywanie=null;
+widoki.nadwoda = async ()=>{
+  clearInterval(zegar);
+  const sess = await setting('sesja',null); const spots = await all('spots');
+  if(!sess){
+    app.innerHTML = `<div class="water"><div class="row between"><b>Rybiorz · nad wodą</b><button class="small" style="min-height:40px" onclick="idz('dziennik')">Zamknij</button></div>
+    <p class="muted">Wybierz łowisko i zacznij zasiadkę. Licznik policzy czas i ryby na godzinę.</p>
+    <select id="wLow">${spotOpts(spots,'')}</select>
+    <button class="catchbtn" id="start" style="background:var(--green)">Start zasiadki</button>
+    <h2>Ostatnie zasiadki</h2><div id="hist"></div></div>`;
+    const ss=(await all('sessions')).sort((a,b)=>b.start.localeCompare(a.start)).slice(0,10); const cs=await all('catches');
+    $('#hist').innerHTML = ss.map(s=>{ const h=(new Date(s.end)-new Date(s.start))/3600000; const n=cs.filter(c=>c.session===s.id).length;
+      return `<div class="tile" style="align-items:flex-start;margin-bottom:8px"><b>${dataPL(s.start)} · ${esc(s.spotName||'bez łowiska')}</b><span>${h.toFixed(1)} h · ${n} ryb · ${(n/Math.max(h,0.01)).toFixed(2)} ryby/h</span></div>`; }).join('') || '<p class="muted">Brak.</p>';
+    $('#start').onclick = async ()=>{ const id=$('#wLow').value; const sp=spots.find(s=>s.id===id); const pos=await pozycja();
+      let spot=sp; if(!spot && pos){ spot=await najblizszeLowisko(pos); }
+      await setSetting('sesja',{id:uid(),start:new Date().toISOString(),spotId:spot?spot.id:'',spotName:spot?spot.name:'',lat:spot?spot.lat:pos?.lat,lon:spot?spot.lon:pos?.lon});
+      try{ await navigator.wakeLock?.request('screen'); }catch(e){}
+      render(); };
+    return;
+  }
+  const cs = (await all('catches')).filter(c=>c.session===sess.id);
+  const ks = ksiezyc(new Date());
+  app.innerHTML = `<div class="water">
+  <div class="row between"><b>Rybiorz · nad wodą</b><span class="muted">${esc(sess.spotName||'bez łowiska')}</span></div>
+  <div style="text-align:center"><div class="muted">Czas zasiadki</div><div class="timer" id="czas">0:00</div><div class="muted" id="tempo"></div></div>
+  <div class="grid3" id="pog" style="grid-template-columns:repeat(4,minmax(0,1fr))"><div class="tile"><span>Temp.</span><b>–</b></div><div class="tile"><span>Ciśn.</span><b>–</b></div><div class="tile"><span>Wiatr</span><b>–</b></div><div class="tile"><span>Księżyc</span><b style="font-size:13px">${ks.faza}</b></div></div>
+  <button class="catchbtn" onclick="idz('zlowilem')">Złowiłem!</button>
+  <div class="grid2"><button id="nagraj"><svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Nagraj</span></button><button id="koniec">Koniec</button></div>
+  <button onclick="idz('dziennik')" style="min-height:48px">Wróć do apki (licznik dalej leci)</button>
+  <div id="nagrania"></div></div>`;
+  const tick=()=>{ const ms=Date.now()-new Date(sess.start); const h=Math.floor(ms/3600000), m=Math.floor(ms/60000)%60;
+    const el=$('#czas'); if(!el) return clearInterval(zegar); el.textContent=`${h}:${pad(m)}`;
+    $('#tempo').textContent=`${cs.length} ${cs.length===1?'ryba':'ryb'} · ${(cs.length/Math.max(ms/3600000,0.01)).toFixed(2)} ryby na godzinę`; };
+  tick(); zegar=setInterval(tick,15000);
+  if(sess.lat!=null && navigator.onLine) pobierzPogode(sess.lat,sess.lon).then(w=>{ const t=$('#pog'); if(!t) return;
+    t.children[0].querySelector('b').textContent=Math.round(w.temp)+'°C'; t.children[1].querySelector('b').textContent=w.cisnienie; t.children[2].querySelector('b').textContent=w.wiatr+' m/s'; }).catch(()=>{});
+  const pokazNagrania = async ()=>{ const ns=(await all('notes')).filter(n=>n.session===sess.id).sort((a,b)=>b.time.localeCompare(a.time));
+    const box=$('#nagrania'); if(!box) return; box.innerHTML = ns.length?'<h2>Nagrania z tej zasiadki</h2>':'';
+    for(const n of ns){ const u=await blobURL(n.audio); const d=document.createElement('div'); d.className='tile'; d.style.marginBottom='8px'; d.innerHTML=`<span>${godzPL(n.time)}</span><audio controls src="${u}" style="width:100%"></audio>`; box.appendChild(d); } };
+  pokazNagrania();
+  $('#nagraj').onclick = ()=>przelaczNagrywanie($('#nagraj'),{session:sess.id,spotId:sess.spotId,spotName:sess.spotName},pokazNagrania);
+  $('#koniec').onclick = async ()=>{ if(!confirm('Zakończyć zasiadkę?')) return; clearInterval(zegar);
+    await put('sessions',{...sess,end:new Date().toISOString()}); await del('settings','sesja');
+    const h=(Date.now()-new Date(sess.start))/3600000; toast(`Zasiadka: ${h.toFixed(1)} h, ${cs.length} ryb`); render(); };
+};
+async function przelaczNagrywanie(btn,meta,po){
+  if(nagrywanie){ nagrywanie.stop(); return; }
+  let stream; try{ stream = await navigator.mediaDevices.getUserMedia({audio:true}); }catch(e){ return toast('Brak dostępu do mikrofonu'); }
+  const rec = new MediaRecorder(stream); const kaw=[];
+  rec.ondataavailable=e=>kaw.push(e.data);
+  rec.onstop=async ()=>{ stream.getTracks().forEach(t=>t.stop()); nagrywanie=null; btn.classList.remove('rec'); btn.querySelector('span').textContent='Nagraj';
+    const blob=new Blob(kaw,{type:rec.mimeType}); const bid=uid(); await put('blobs',{id:bid,blob,kind:'audio'});
+    const pos = await pozycja();
+    await put('notes',{id:uid(),time:new Date().toISOString(),audio:bid,lat:pos?.lat,lon:pos?.lon,...meta}); toast('Nagranie zapisane'); po&&po(); };
+  rec.start(); nagrywanie=rec; btn.classList.add('rec'); btn.querySelector('span').textContent='Stop';
+}
+widoki.notatki = async ()=>{
+  const ns=(await all('notes')).sort((a,b)=>b.time.localeCompare(a.time));
+  app.innerHTML = naglowek('Nagrania',true)+`<main><button class="green block" id="nagraj"><span>Nagraj notatkę</span></button><div id="lista"></div></main>`;
+  $('#nagraj').onclick=()=>przelaczNagrywanie($('#nagraj'),{},render);
+  const l=$('#lista'); if(!ns.length) l.innerHTML='<div class="card muted">Brak nagrań. Nad wodą nagrywasz przyciskiem „Nagraj”.</div>';
+  for(const n of ns){ const u=await blobURL(n.audio); const d=document.createElement('div'); d.className='card';
+    d.innerHTML=`<div class="row between"><b>${dataPL(n.time)} ${godzPL(n.time)}</b><button class="small danger">Usuń</button></div><div class="muted">${esc(n.spotName||'')}</div><audio controls src="${u}" style="width:100%;margin-top:6px"></audio>`;
+    d.querySelector('button').onclick=async()=>{ if(!confirm('Usunąć nagranie?')) return; await del('blobs',n.audio); await del('notes',n.id); render(); };
+    l.appendChild(d); }
+};
+
+/* ================= 5. Rekordy i statystyki ================= */
+widoki.rekordy = async ()=>{
+  const cs = await all('catches'); const rok=new Date().getFullYear();
+  const lata=[...new Set(cs.map(c=>new Date(c.time).getFullYear()))].sort((a,b)=>b-a); if(!lata.includes(rok)) lata.unshift(rok);
+  const wybRok = +(await setting('statRok',rok));
+  const wRoku = cs.filter(c=>new Date(c.time).getFullYear()===wybRok);
+  const rek={}; for(const c of cs){ const r=rek[c.species]||(rek[c.species]={n:0}); r.n++; if(c.weight&&(!r.w||c.weight>r.w.weight)) r.w=c; if(c.length&&(!r.l||c.length>r.l.length)) r.l=c; }
+  const mies=Array(12).fill(0); for(const c of wRoku) mies[new Date(c.time).getMonth()]++; const mx=Math.max(1,...mies);
+  const sesje=(await all('sessions')).filter(s=>new Date(s.start).getFullYear()===wybRok); const godz=sesje.reduce((a,s)=>a+(new Date(s.end)-new Date(s.start))/3600000,0);
+  const naj = Object.entries(rek).sort((a,b)=>b[1].n-a[1].n)[0];
+  app.innerHTML = naglowek('Rekordy i statystyki',true)+`<main>
+  <label for="rRok">Rok</label><select id="rRok">${lata.map(y=>`<option${y===wybRok?' selected':''}>${y}</option>`).join('')}</select>
+  <div class="grid3" style="margin-top:10px"><div class="stat"><span class="muted">Ryby</span><b>${wRoku.length}</b></div><div class="stat"><span class="muted">Wypuszczone</span><b>${wRoku.filter(c=>!c.kept).length}</b></div><div class="stat"><span class="muted">Godziny</span><b>${godz.toFixed(0)}</b></div></div>
+  <h2>Połowy w miesiącach (${wybRok})</h2><div class="card">${mies.map((n,i)=>`<div class="row" style="margin:4px 0"><span style="width:92px;font-size:13px">${MIESIACE[i]}</span><div class="grow"><div class="bar" style="width:${n/mx*100}%;${n?'':'background:transparent'}"></div></div><span style="width:24px;text-align:right;font-size:13px">${n}</span></div>`).join('')}</div>
+  <h2>Moje rekordy (wszystkie lata)</h2>
+  ${Object.keys(rek).length?`<div class="card"><table><tr><th>Gatunek</th><th>Najcięższa</th><th>Najdłuższa</th><th>Szt.</th></tr>
+  ${Object.entries(rek).sort((a,b)=>a[0].localeCompare(b[0],'pl')).map(([g,r])=>`<tr><td><b>${esc(g)}</b></td><td>${r.w?`<a href="#polow/${r.w.id}">${kg(r.w.weight)}</a><br><span class="muted">${dataPL(r.w.time)}</span>`:'–'}</td><td>${r.l?`<a href="#polow/${r.l.id}">${r.l.length} cm</a>`:'–'}</td><td>${r.n}</td></tr>`).join('')}</table></div>
+  <p class="muted">Najczęściej łowisz: ${esc(naj[0])} (${naj[1].n} szt.).</p>`:'<div class="card muted">Brak połowów.</div>'}</main>`;
+  $('#rRok').onchange=async e=>{ await setSetting('statRok',+e.target.value); render(); };
+};
+
+/* ================= 6. Co działa ================= */
+widoki.codziala = async (spotId)=>{
+  const spots=await all('spots'); const wyb=spotId||''; let cs=await all('catches');
+  const gat=await setting('cdGat','');
+  if(wyb) cs=cs.filter(c=>c.spotId===wyb); if(gat) cs=cs.filter(c=>c.species===gat);
+  const ranking=(key)=>{ const m={}; for(const c of cs){ const k=(c[key]||'').trim(); if(!k) continue; const r=m[k]||(m[k]={n:0,w:0}); r.n++; r.w+=c.weight||0; } return Object.entries(m).sort((a,b)=>b[1].n-a[1].n).slice(0,6); };
+  const rigs=await all('rigs'); const rigName=id=>(rigs.find(r=>r.id===id)||{}).name;
+  const blok=(t,key,fmt)=>{ const r=ranking(key); const mx=r[0]?.[1].n||1; return `<h2>${t}</h2><div class="card">${r.length?r.map(([k,v])=>`<div class="row" style="margin:6px 0"><span style="width:130px;font-size:14px">${esc(fmt?fmt(k):k)}</span><div class="grow"><div class="bar" style="width:${v.n/mx*100}%"></div></div><span style="width:28px;text-align:right">${v.n}</span></div>`).join(''):'<span class="muted">Brak danych.</span>'}</div>`; };
+  const godz={}; for(const c of cs){ const h=new Date(c.time).getHours(); const k=`${pad(h)}–${pad((h+1)%24)}`; godz[k]=(godz[k]||0)+1; }
+  const topG=Object.entries(godz).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  app.innerHTML = naglowek('Co działa',true)+`<main>
+  <div class="grid2"><div><label for="cLow">Łowisko</label><select id="cLow"><option value="">Wszystkie</option>${spots.map(s=>`<option value="${s.id}"${s.id===wyb?' selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+  <div><label for="cGat">Gatunek</label><select id="cGat"><option value="">Wszystkie</option>${opts(GATUNKI,gat)}</select></div></div>
+  <p class="muted">Na podstawie ${cs.length} połowów.</p>
+  ${blok('Przynęty','bait')}${blok('Metody','method')}${blok('Zanęty','groundbait')}${blok('Zestawy','rig',rigName)}
+  <h2>Najlepsze godziny</h2><div class="card">${topG.length?topG.map(([k,n])=>`<div>${k}: <b>${n}</b></div>`).join(''):'<span class="muted">Brak danych.</span>'}</div></main>`;
+  $('#cLow').onchange=e=>idz('codziala',e.target.value||null);
+  $('#cGat').onchange=async e=>{ await setSetting('cdGat',e.target.value); render(); };
+};
+
+/* ================= 4. Wymiary i okresy ochronne ================= */
+widoki.przepisy = async ()=>{
+  const P=await przepisy(); const dzis=new Date(); const md=`${pad(dzis.getMonth()+1)}-${pad(dzis.getDate())}`;
+  const fmt=o=>o.split('-').reverse().join('.');
+  app.innerHTML = naglowek('Wymiary i okresy',true)+`<main>
+  <div class="alert info">${esc(ZRODLO_PRZEPISOW)}</div>
+  <label for="szukaj">Szukaj gatunku</label><input id="szukaj" placeholder="np. szczupak">
+  <div id="lista"></div>
+  <button class="block" style="margin-top:14px" id="dodaj">Dodaj lub popraw gatunek</button>
+  <button class="block danger" style="margin-top:10px" id="reset">Przywróć dane startowe</button></main>`;
+  const pokaz=()=>{ const q=$('#szukaj').value.toLowerCase();
+    $('#lista').innerHTML = Object.entries(P).filter(([g])=>g.toLowerCase().includes(q)).sort((a,b)=>a[0].localeCompare(b[0],'pl')).map(([g,p])=>{
+      const teraz=(p.okresy||[]).some(([o,d])=>o<=d?(md>=o&&md<=d):(md>=o||md<=d));
+      return `<div class="card" onclick="idz('przepis','${esc(g)}')"><div class="row between"><b>${esc(g)}</b>${p.zakaz?'<span class="tag took">zakaz</span>':teraz?'<span class="tag took">teraz ochrona</span>':''}</div>
+      <div class="muted">${p.zakaz?'Całkowity zakaz zabierania':[p.min!=null?`chroniony do ${p.min} cm`:'',p.max!=null?`górny od ${p.max} cm`:'',(p.okresy||[]).map(([o,d])=>`okres ${fmt(o)}–${fmt(d)}`).join(', ')].filter(Boolean).join(' · ')||'bez wymiaru'}</div>
+      ${p.limit?`<div class="muted">Limit: ${esc(p.limit)}</div>`:''}${p.uwaga&&!p.zakaz?`<div class="muted">${esc(p.uwaga)}</div>`:''}</div>`; }).join(''); };
+  $('#szukaj').oninput=pokaz; pokaz();
+  $('#dodaj').onclick=()=>idz('przepis','');
+  $('#reset').onclick=async()=>{ if(!confirm('Usunąć Twoje poprawki i wrócić do danych startowych?')) return; await setSetting('przepisy',{}); render(); };
+};
+widoki.przepis = async (gat)=>{
+  const P=await przepisy(); const p=P[gat]||{}; const fmt=o=>o.split('-').reverse().join('.');
+  app.innerHTML = naglowek(gat||'Nowy gatunek',true)+`<main>
+  <label for="pG">Gatunek</label><input id="pG" value="${esc(gat)}" list="gl"><datalist id="gl">${GATUNKI.map(g=>`<option value="${esc(g)}">`).join('')}</datalist>
+  <div class="grid2"><div><label for="pMin">Chroniony do (cm)</label><input id="pMin" inputmode="decimal" value="${p.min??''}"></div><div><label for="pMax">Wymiar górny od (cm)</label><input id="pMax" inputmode="decimal" value="${p.max??''}"></div></div>
+  <label for="pOk">Okres ochronny (np. 01.01–30.04, kilka po przecinku)</label><input id="pOk" value="${(p.okresy||[]).map(([o,d])=>fmt(o)+'–'+fmt(d)).join(', ')}">
+  <label for="pLim">Limit</label><input id="pLim" value="${esc(p.limit)}">
+  <label for="pUw">Uwaga</label><input id="pUw" value="${esc(p.uwaga)}">
+  <label class="row" style="color:var(--ink)"><input id="pZak" type="checkbox" style="width:24px;min-height:24px"${p.zakaz?' checked':''}> Całkowity zakaz zabierania</label>
+  <button class="green block" id="zap" style="margin-top:14px">Zapisz</button></main>`;
+  $('#zap').onclick=async()=>{ const g=$('#pG').value.trim(); if(!g) return toast('Wpisz gatunek');
+    const okresy=[]; for(const part of $('#pOk').value.split(',')){ const m=part.match(/(\d{1,2})\.(\d{1,2})\s*[–-]\s*(\d{1,2})\.(\d{1,2})/); if(m) okresy.push([`${pad(m[2])}-${pad(m[1])}`,`${pad(m[4])}-${pad(m[3])}`]); }
+    const rec={}; const mn=num($('#pMin').value), mx=num($('#pMax').value); if(mn!=null) rec.min=mn; if(mx!=null) rec.max=mx; if(okresy.length) rec.okresy=okresy;
+    if($('#pLim').value.trim()) rec.limit=$('#pLim').value.trim(); if($('#pUw').value.trim()) rec.uwaga=$('#pUw').value.trim(); if($('#pZak').checked) rec.zakaz=true;
+    const wl=await setting('przepisy',{}); wl[g]=rec; await setSetting('przepisy',wl); toast('Zapisane'); idz('przepisy'); };
+};
+
+/* ================= 7. Lista sprzętu ================= */
+widoki.sprzet = async ()=>{
+  let lista = await setting('sprzet',null); if(!lista){ lista=SPRZET_START.map(t=>({t,ok:false})); await setSetting('sprzet',lista); }
+  const ile=lista.filter(x=>x.ok).length;
+  app.innerHTML = naglowek('Lista sprzętu',true)+`<main><p class="muted">${ile} z ${lista.length} spakowane</p>
+  <div class="card">${lista.map((x,i)=>`<div class="list-item"><input type="checkbox" data-i="${i}" style="width:28px;min-height:28px"${x.ok?' checked':''} aria-label="${esc(x.t)}"><span class="grow" style="${x.ok?'text-decoration:line-through;color:var(--muted)':''}">${esc(x.t)}</span><button class="small" data-del="${i}" aria-label="Usuń">✕</button></div>`).join('')}</div>
+  <div class="row"><input id="nowy" placeholder="Dodaj rzecz" class="grow"><button class="green" id="dodaj">Dodaj</button></div>
+  <button class="block" style="margin-top:12px" id="reset">Odznacz wszystko (nowy wyjazd)</button></main>`;
+  app.querySelectorAll('input[data-i]').forEach(c=>c.onchange=async()=>{ lista[c.dataset.i].ok=c.checked; await setSetting('sprzet',lista); render(); });
+  app.querySelectorAll('button[data-del]').forEach(b=>b.onclick=async()=>{ lista.splice(b.dataset.del,1); await setSetting('sprzet',lista); render(); });
+  $('#dodaj').onclick=async()=>{ const t=$('#nowy').value.trim(); if(!t) return; lista.push({t,ok:false}); await setSetting('sprzet',lista); render(); };
+  $('#reset').onclick=async()=>{ lista.forEach(x=>x.ok=false); await setSetting('sprzet',lista); render(); };
+};
+
+/* ================= 8. Zestawy ================= */
+widoki.zestawy = async ()=>{
+  const rigs=await all('rigs'); const cs=await all('catches');
+  app.innerHTML = naglowek('Zestawy',true)+`<main><button class="green block" onclick="idz('zestaw','')">Dodaj zestaw</button>
+  ${rigs.map(r=>`<div class="card" onclick="idz('zestaw','${r.id}')"><b>${esc(r.name)}</b><div class="muted">${esc([r.line&&'żyłka '+r.line,r.leader&&'przypon '+r.leader,r.hook&&'haczyk '+r.hook,r.weight&&'ciężarek '+r.weight].filter(Boolean).join(' · '))}</div><div class="muted">${cs.filter(c=>c.rig===r.id).length} ryb na tym zestawie</div></div>`).join('')||'<div class="card muted">Brak zestawów.</div>'}</main>`;
+};
+widoki.zestaw = async (id)=>{
+  const r = id ? await get('rigs',id) : {id:uid()};
+  const f=(k,t,ph)=>`<label for="z_${k}">${t}</label><input id="z_${k}" value="${esc(r[k])}" placeholder="${ph}">`;
+  app.innerHTML = naglowek(id?r.name:'Nowy zestaw',true)+`<main>
+  ${f('name','Nazwa','np. Method na karpia')}${f('method','Metoda','np. method feeder')}${f('line','Żyłka / plecionka','np. 0,25 mm')}${f('leader','Przypon','np. 0,18 mm, 10 cm')}${f('hook','Haczyk','np. nr 10')}${f('weight','Ciężarek / koszyczek','np. 30 g')}
+  <label for="z_note">Notatka</label><textarea id="z_note">${esc(r.note)}</textarea>
+  <button class="green block" id="zap" style="margin-top:14px">Zapisz</button>${id?'<button class="danger block" id="usun" style="margin-top:10px">Usuń</button>':''}</main>`;
+  $('#zap').onclick=async()=>{ for(const k of ['name','method','line','leader','hook','weight','note']) r[k]=$('#z_'+k).value.trim(); if(!r.name) return toast('Wpisz nazwę'); await put('rigs',r); idz('zestawy'); };
+  if(id) $('#usun').onclick=async()=>{ if(!confirm('Usunąć zestaw?')) return; await del('rigs',id); idz('zestawy'); };
+};
+
+/* ================= 9. Wyjazdy ================= */
+function ics(tytul,dataISO,opis){
+  const d=dataISO.replace(/-/g,''); const nast=new Date(dataISO+'T00:00'); nast.setDate(nast.getDate()+1);
+  const d2=`${nast.getFullYear()}${pad(nast.getMonth()+1)}${pad(nast.getDate())}`; const st=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
+  const tekst=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Rybiorz//PL','BEGIN:VEVENT',`UID:${uid()}@rybiorz`,`DTSTAMP:${st}`,`DTSTART;VALUE=DATE:${d}`,`DTEND;VALUE=DATE:${d2}`,`SUMMARY:${tytul.replace(/[,;]/g,' ')}`,`DESCRIPTION:${(opis||'').replace(/\n/g,'\\n').replace(/[,;]/g,' ')}`,
+    'BEGIN:VALARM','TRIGGER:-PT12H','ACTION:DISPLAY',`DESCRIPTION:${tytul.replace(/[,;]/g,' ')}`,'END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+  pobierz(new Blob([tekst],{type:'text/calendar'}),'rybiorz-'+d+'.ics');
+}
+widoki.wyjazdy = async ()=>{
+  const ts=(await all('trips')).sort((a,b)=>a.date.localeCompare(b.date)); const d=dzisISO();
+  const prz=ts.filter(t=>t.date>=d), min=ts.filter(t=>t.date<d).reverse();
+  const karta=t=>{ const k=ksiezyc(new Date(t.date+'T12:00')); return `<div class="card" onclick="idz('wyjazd','${t.id}')"><div class="row between"><b>${dataPL(t.date)}</b><span class="muted">${k.faza}</span></div><div>${esc(t.spotName||t.title||'')}</div>${t.note?`<div class="muted">${esc(t.note)}</div>`:''}</div>`; };
+  app.innerHTML = naglowek('Wyjazdy',true)+`<main><button class="green block" onclick="idz('wyjazd','')">Zaplanuj wyjazd</button>
+  <h2>Zaplanowane</h2>${prz.map(karta).join('')||'<div class="card muted">Brak.</div>'}<h2>Minione</h2>${min.slice(0,20).map(karta).join('')||'<div class="card muted">Brak.</div>'}</main>`;
+};
+widoki.wyjazd = async (id)=>{
+  const spots=await all('spots'); const t = id ? await get('trips',id) : {id:uid(),date:dzisISO()};
+  app.innerHTML = naglowek(id?'Wyjazd':'Nowy wyjazd',true)+`<main>
+  <label for="tD">Data</label><input id="tD" type="date" value="${t.date}">
+  <label for="tL">Łowisko</label><select id="tL">${spotOpts(spots,t.spotId)}</select>
+  <label for="tT">Albo opis miejsca</label><input id="tT" value="${esc(t.title)}">
+  <label for="tN">Notatka (z kim, plan, co zabrać)</label><textarea id="tN">${esc(t.note)}</textarea>
+  <div id="astro" class="muted" style="margin-top:8px"></div>
+  <button class="green block" id="zap" style="margin-top:14px">Zapisz</button>
+  <button class="block" id="ics" style="margin-top:10px">Dodaj przypomnienie do kalendarza telefonu</button>
+  ${id?'<button class="danger block" id="usun" style="margin-top:10px">Usuń</button>':''}</main>`;
+  const astro=()=>{ const dt=new Date($('#tD').value+'T12:00'); const sp=spots.find(s=>s.id===$('#tL').value)||{lat:51.11,lon:17.03}; const s=slonce(dt,sp.lat??51.11,sp.lon??17.03); $('#astro').textContent=`Tego dnia: wschód ${godzina(s&&s.wschod)}, zachód ${godzina(s&&s.zachod)}, księżyc: ${ksiezyc(dt).faza}.`; };
+  $('#tD').onchange=astro; $('#tL').onchange=astro; astro();
+  const zbierz=()=>{ t.date=$('#tD').value; t.spotId=$('#tL').value; t.spotName=(spots.find(s=>s.id===t.spotId)||{}).name||''; t.title=$('#tT').value.trim(); t.note=$('#tN').value.trim(); };
+  $('#zap').onclick=async()=>{ zbierz(); if(!t.date) return toast('Wybierz datę'); await put('trips',t); toast('Zapisane'); idz('wyjazdy'); };
+  $('#ics').onclick=()=>{ zbierz(); ics('Ryby: '+(t.spotName||t.title||'wyjazd'),t.date,t.note); };
+  if(id) $('#usun').onclick=async()=>{ if(!confirm('Usunąć wyjazd?')) return; await del('trips',id); idz('wyjazdy'); };
+};
+
+/* ================= 10. Wydatki ================= */
+widoki.wydatki = async ()=>{
+  const es=(await all('expenses')).sort((a,b)=>b.date.localeCompare(a.date)); const rok=new Date().getFullYear();
+  const wRoku=es.filter(e=>e.date.startsWith(rok)); const suma=wRoku.reduce((a,e)=>a+e.amount,0);
+  const kat={}; for(const e of wRoku) kat[e.cat]=(kat[e.cat]||0)+e.amount;
+  app.innerHTML = naglowek('Wydatki',true)+`<main>
+  <div class="card"><div class="muted">Razem w ${rok}</div><div style="font-size:32px;font-weight:800">${zl(suma)}</div>
+  ${Object.entries(kat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="row between"><span>${esc(k)}</span><b>${zl(v)}</b></div>`).join('')}</div>
+  <h2>Dodaj wydatek</h2><div class="card">
+  <div class="grid2"><div><label for="eK">Kwota (zł)</label><input id="eK" inputmode="decimal"></div><div><label for="eD">Data</label><input id="eD" type="date" value="${dzisISO()}"></div></div>
+  <label for="eC">Kategoria</label><select id="eC">${opts(KAT_WYDATKOW)}</select>
+  <label for="eO">Opis</label><input id="eO" placeholder="np. kołowrotek, łowisko Bażant">
+  <button class="green block" id="zap" style="margin-top:12px">Dodaj</button></div>
+  <h2>Historia</h2>${es.slice(0,60).map(e=>`<div class="card row between"><div><b>${zl(e.amount)}</b> <span class="muted">${esc(e.cat)}</span><div class="muted">${dataPL(e.date)} ${esc(e.desc)}</div></div><button class="small danger" data-del="${e.id}">Usuń</button></div>`).join('')||'<div class="card muted">Brak.</div>'}</main>`;
+  $('#zap').onclick=async()=>{ const k=num($('#eK').value); if(!k) return toast('Wpisz kwotę'); await put('expenses',{id:uid(),amount:k,date:$('#eD').value,cat:$('#eC').value,desc:$('#eO').value.trim()}); toast('Dodane'); render(); };
+  app.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{ if(!confirm('Usunąć wydatek?')) return; await del('expenses',b.dataset.del); render(); });
+};
+
+/* ================= 13. Zezwolenia ================= */
+widoki.zezwolenia = async ()=>{
+  const ps=(await all('permits')).sort((a,b)=>(a.until||'').localeCompare(b.until||'')); const d=dzisISO();
+  app.innerHTML = naglowek('Zezwolenia',true)+`<main><p class="muted">Karta wędkarska, składka PZW, zezwolenia na łowiska. Przypomnę na ekranie startowym 30 dni przed końcem.</p>
+  ${ps.map(p=>`<div class="card"><div class="row between"><b>${esc(p.name)}</b>${p.until&&p.until<d?'<span class="tag took">nieważne</span>':'<span class="tag">ważne</span>'}</div>
+  <div class="muted">${p.until?'do '+dataPL(p.until):'bezterminowo'}${p.number?' · nr '+esc(p.number):''}</div>
+  <div class="row" style="margin-top:8px">${p.until?`<button class="small" data-ics="${p.id}">Przypomnienie w kalendarzu</button>`:''}<button class="small danger" data-del="${p.id}">Usuń</button></div></div>`).join('')||'<div class="card muted">Brak.</div>'}
+  <h2>Dodaj</h2><div class="card">
+  <label for="zN">Nazwa</label><input id="zN" placeholder="np. Składka PZW Wrocław 2026">
+  <div class="grid2"><div><label for="zD">Ważne do</label><input id="zD" type="date"></div><div><label for="zNr">Numer</label><input id="zNr"></div></div>
+  <button class="green block" id="zap" style="margin-top:12px">Dodaj</button></div></main>`;
+  $('#zap').onclick=async()=>{ const n=$('#zN').value.trim(); if(!n) return toast('Wpisz nazwę'); await put('permits',{id:uid(),name:n,until:$('#zD').value,number:$('#zNr').value.trim()}); render(); };
+  app.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{ if(!confirm('Usunąć?')) return; await del('permits',b.dataset.del); render(); });
+  app.querySelectorAll('[data-ics]').forEach(b=>b.onclick=()=>{ const p=ps.find(x=>x.id===b.dataset.ics); const dt=new Date(p.until+'T00:00'); dt.setDate(dt.getDate()-14);
+    ics('Kończy się: '+p.name,`${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`,'Ważne do '+dataPL(p.until)); });
+};
+
+/* ================= 15. Eksport i kopia ================= */
+function pobierz(blob,nazwa){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nazwa; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); }
+function csv(wiersze){ return '\ufeff'+wiersze.map(r=>r.map(v=>{ const s=String(v??''); return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }).join(';')).join('\r\n'); }
+const b64 = (blob)=>new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(blob); });
+widoki.eksport = async ()=>{
+  let miejsce=''; try{ const e=await navigator.storage.estimate(); miejsce=`Apka zajmuje ok. ${(e.usage/1048576).toFixed(1)} MB.`; }catch(e){}
+  const trwale = navigator.storage?.persisted ? await navigator.storage.persisted() : false;
+  const ost = await setting('ostatniaKopia',null);
+  app.innerHTML = naglowek('Eksport i kopia',true)+`<main>
+  <div class="alert ${trwale?'ok':'info'}">${trwale?'Telefon nie usunie danych apki sam z siebie.':'Telefon może kiedyś wyczyścić dane przy braku miejsca. Rób kopię.'} ${miejsce}</div>
+  <div class="card"><div class="big">Pełna kopia</div><p class="muted">Wszystko razem ze zdjęciami i nagraniami, w jednym pliku. Zapisz go np. na OneDrive. ${ost?'Ostatnia kopia: '+dataPL(ost)+'.':'Jeszcze nie robiłeś kopii.'}</p>
+  <button class="green block" id="kopia">Zrób kopię</button><button class="block" id="wczytaj" style="margin-top:10px">Wczytaj kopię</button><input id="plik" type="file" accept=".json,application/json" hidden></div>
+  <div class="card"><div class="big">Excel</div><p class="muted">Połowy, wydatki i wyjazdy jako pliki CSV, otworzysz je w Excelu.</p>
+  <div class="grid3"><button id="csvP">Połowy</button><button id="csvW">Wydatki</button><button id="csvJ">Wyjazdy</button></div></div>
+  <div class="card"><div class="big">PDF</div><p class="muted">Dziennik do druku. W oknie drukowania wybierz „Zapisz jako PDF”.</p><button class="block" onclick="idz('druk')">Dziennik do PDF</button></div></main>`;
+  $('#kopia').onclick=async()=>{ $('#kopia').textContent='Przygotowuję…'; const out={app:'rybiorz',wersja:1,data:new Date().toISOString(),dane:{}};
+    for(const s of STORES){ const rows=await all(s); out.dane[s] = s==='blobs' ? await Promise.all(rows.map(async r=>({id:r.id,kind:r.kind,data:await b64(r.blob)}))) : rows; }
+    pobierz(new Blob([JSON.stringify(out)],{type:'application/json'}),`rybiorz-kopia-${dzisISO()}.json`); await setSetting('ostatniaKopia',new Date().toISOString()); $('#kopia').textContent='Zrób kopię'; };
+  $('#wczytaj').onclick=()=>$('#plik').click();
+  $('#plik').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; let j; try{ j=JSON.parse(await f.text()); }catch(er){ return toast('To nie jest plik kopii Rybiorza'); }
+    if(j.app!=='rybiorz') return toast('To nie jest plik kopii Rybiorza');
+    if(!confirm('Wczytać kopię? Obecne dane zostaną zastąpione danymi z kopii.')) return;
+    for(const s of STORES){ await clearStore(s); for(const r of (j.dane[s]||[])){ if(s==='blobs'){ const blob=await (await fetch(r.data)).blob(); await put('blobs',{id:r.id,kind:r.kind,blob}); } else await put(s,r); } }
+    toast('Kopia wczytana'); idz('dziennik'); };
+  $('#csvP').onclick=async()=>{ const cs=(await all('catches')).sort((a,b)=>a.time.localeCompare(b.time)); const rigs=await all('rigs');
+    pobierz(new Blob([csv([['Data','Godzina','Gatunek','Waga kg','Długość cm','Zabrana','Metoda','Przynęta','Zanęta','Zestaw','Łowisko','Temp °C','Ciśnienie hPa','Trend','Wiatr m/s','Księżyc','Szer.','Dł.','Notatka'],
+      ...cs.map(c=>[dataPL(c.time),godzPL(c.time),c.species,c.weight!=null?String(c.weight).replace('.',','):'',c.length??'',c.kept?'tak':'nie',c.method,c.bait,c.groundbait,(rigs.find(r=>r.id===c.rig)||{}).name||'',c.spotName,c.weather?.temp??'',c.weather?.cisnienie??'',c.weather?.trend??'',c.weather?.wiatr??'',c.moon||'',c.lat??'',c.lon??'',c.note])])],{type:'text/csv'}),`rybiorz-polowy-${dzisISO()}.csv`); };
+  $('#csvW').onclick=async()=>{ const es=(await all('expenses')).sort((a,b)=>a.date.localeCompare(b.date)); pobierz(new Blob([csv([['Data','Kwota zł','Kategoria','Opis'],...es.map(e=>[dataPL(e.date),String(e.amount).replace('.',','),e.cat,e.desc])])],{type:'text/csv'}),`rybiorz-wydatki-${dzisISO()}.csv`); };
+  $('#csvJ').onclick=async()=>{ const ts=(await all('trips')).sort((a,b)=>a.date.localeCompare(b.date)); pobierz(new Blob([csv([['Data','Łowisko','Opis','Notatka'],...ts.map(t=>[dataPL(t.date),t.spotName,t.title,t.note])])],{type:'text/csv'}),`rybiorz-wyjazdy-${dzisISO()}.csv`); };
+};
+widoki.druk = async ()=>{
+  const cs=(await all('catches')).sort((a,b)=>a.time.localeCompare(b.time));
+  app.innerHTML = `<main style="padding-top:16px"><div class="noprint row" style="margin-bottom:12px"><button onclick="history.back()">← Wstecz</button><button class="green" onclick="print()">Drukuj / zapisz PDF</button></div>
+  <h1>Rybiorz: dziennik połowów</h1><p class="muted">Stan na ${dataPL(new Date().toISOString())}, ${cs.length} połowów</p><div id="lista"></div></main>`;
+  const l=$('#lista');
+  for(const c of cs){ const u=await blobURL(c.photo); const d=document.createElement('div'); d.className='card catch';
+    d.innerHTML=`${u?`<img class="thumb" src="${u}" alt="" style="width:110px;height:110px">`:''}<div><b>${esc(c.species)}${c.weight?', '+kg(c.weight):''}${c.length?', '+c.length+' cm':''}</b> · ${c.kept?'zabrana':'wypuszczona'}
+    <div class="muted">${dataPL(c.time)} ${godzPL(c.time)} · ${esc(c.spotName||'')} · ${esc([c.method,c.bait,c.groundbait].filter(Boolean).join(', '))}</div>
+    ${c.weather?`<div class="muted">${c.weather.temp}°C, ${c.weather.cisnienie} hPa (${c.weather.trend}), wiatr ${c.weather.wiatr} m/s${c.moon?', '+c.moon:''}</div>`:''}${c.note?`<div>${esc(c.note)}</div>`:''}</div>`; l.appendChild(d); }
+};
+
+/* ================= Start ================= */
+(async()=>{
+  try{ if(navigator.storage?.persist) await navigator.storage.persist(); }catch(e){}
+  if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+  render();
+})();
+</script>
+</body>
+</html>
